@@ -80,7 +80,7 @@ class Container implements ContainerInterface, ArrayAccess
      * 类的标识[完整类名]
      * @return bool
      */
-    public function has(string $id)
+    public function has(string $id): bool
     {
         return isset(static::$instances[$this->bound($id)]);
     }
