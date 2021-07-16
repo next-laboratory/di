@@ -1,0 +1,17 @@
+{
+  "name": "max/container",
+  "authors": [
+    {
+      "name": "chengyao",
+      "email": "bigyao@139.com"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "Max\\": "src/"
+    }
+  },
+  "require": {
+    "php": ">=7.2.0"
+  }
+}
