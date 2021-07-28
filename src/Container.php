@@ -197,7 +197,6 @@ class Container implements ContainerInterface, ArrayAccess
         throw new ContainerException('Cannot initialize class: ' . $abstract);
     }
 
-
     /**
      * 调用类的方法
      * @param array $callable
@@ -309,6 +308,11 @@ class Container implements ContainerInterface, ArrayAccess
     public function __get($abstract)
     {
         return $this->make($abstract);
+    }
+
+    public function __isset(string $id): bool
+    {
+        return isset(static::$instances[$id]);
     }
 
     private function __clone()
