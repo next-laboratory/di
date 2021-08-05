@@ -92,18 +92,17 @@ class Container implements ContainerInterface, ArrayAccess
      * @param string $className
      * 绑定的类名
      */
-    public function bind(string $id, string $className)
+    public function bind(string $id, $concrete)
     {
-        $this->bind[$id] = $className;
+        $this->bind[$id] = $concrete;
     }
-
 
     /**
      * 获取绑定类名
      * @param $name
      * @return string
      */
-    public function bound(string $name): string
+    public function bound(string $name)
     {
         return $this->bind[strtolower($name)] ?? $name;
     }
@@ -121,6 +120,9 @@ class Container implements ContainerInterface, ArrayAccess
     public function make(string $abstract, array $arguments = [], bool $renew = false)
     {
         $abstract = $this->bound($abstract);
+        if ($abstract instanceof \Closure) {
+            return $abstract();
+        }
         if ($renew) {
             $this->remove($abstract);
             return $this->resolve($abstract, $arguments);
