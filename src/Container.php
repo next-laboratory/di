@@ -16,6 +16,12 @@ class Container implements ContainerInterface, ArrayAccess
 {
 
     /**
+     * 容器实例
+     * @var
+     */
+    protected static $instance;
+
+    /**
      * 容器
      * @var array
      */
@@ -28,6 +34,13 @@ class Container implements ContainerInterface, ArrayAccess
     protected $bind = [];
 
     /**
+     * 别名[开发]
+     * @var array
+     * @preview
+     */
+    protected $alias = [];
+
+    /**
      * 实例标识
      * @var bool
      */
@@ -37,6 +50,7 @@ class Container implements ContainerInterface, ArrayAccess
      * 单例模式获取类实例
      * 从static::$instances中实例，和依赖注入获取相同实例
      * @return static
+     * @deprecated
      */
     public static function instance()
     {
@@ -45,6 +59,24 @@ class Container implements ContainerInterface, ArrayAccess
             static::$instances[$class] = new static();
         }
         return static::$instances[$class];
+    }
+
+    public static function getInstance()
+    {
+        if (is_null(static::$instance)) {
+            static::$instance = new static;
+        }
+        return static::$instance;
+    }
+
+    /**
+     * 使用静态方法设置
+     * @param string $abstract
+     * @param object $concrete
+     */
+    public static function setInstance(ContainerInterface $container)
+    {
+        static::$instance = $container;
     }
 
     /**
@@ -56,7 +88,7 @@ class Container implements ContainerInterface, ArrayAccess
      */
     public function set(string $abstract, $instance)
     {
-        static::$instances[$this->bound($abstract)] = $instance;
+        static::$instances[$this->getAlias($abstract)] = $instance;
     }
 
     /**
@@ -67,7 +99,7 @@ class Container implements ContainerInterface, ArrayAccess
      */
     public function get(string $id)
     {
-        $abstract = $this->bound($id);
+        $abstract = $this->getAlias($id);
         if ($this->has($abstract)) {
             return static::$instances[$abstract];
         }
@@ -82,11 +114,11 @@ class Container implements ContainerInterface, ArrayAccess
      */
     public function has(string $id): bool
     {
-        return isset(static::$instances[$this->bound($id)]);
+        return isset(static::$instances[$this->getAlias($id)]);
     }
 
     /**
-     * 添加绑定类的标识
+     * 绑定类到标识
      * @param string $id
      * 绑定的类标识
      * @param string $className
@@ -98,13 +130,53 @@ class Container implements ContainerInterface, ArrayAccess
     }
 
     /**
-     * 获取绑定类名
+     * 判断标识是否被绑定
      * @param $name
      * @return string
      */
-    public function bound(string $name)
+    public function bound(string $id)
     {
-        return $this->bind[strtolower($name)] ?? $name;
+        return isset($this->bind[strtolower($id)]);
+    }
+
+    /**
+     * 添加绑定[开发]
+     * @param string $id
+     * @param string $class
+     * @return $this
+     */
+    public function alias(string $id, string $class)
+    {
+        $this->alias[$id] = $class;
+        return $this;
+    }
+
+    /**
+     * 移除别名
+     * @param string $id
+     * @return $this
+     */
+    public function unAlias(string $id)
+    {
+        if ($this->hasAlias($id)) {
+            unset($this->alias[$id]);
+        }
+        return $this;
+    }
+
+    public function hasAlias(string $id)
+    {
+        return isset($this->alias[$id]);
+    }
+
+    /**
+     * 通过标识获取别名
+     * @param string $id
+     * @return string
+     */
+    protected function getAlias(string $id): string
+    {
+        return $this->alias[$id] ?? $id;
     }
 
     /**
@@ -119,7 +191,7 @@ class Container implements ContainerInterface, ArrayAccess
      */
     public function make(string $abstract, array $arguments = [], bool $renew = false)
     {
-        $abstract = $this->bound($abstract);
+        $abstract = $this->getAlias($abstract);
         if ($abstract instanceof \Closure) {
             return $abstract();
         }
@@ -138,7 +210,6 @@ class Container implements ContainerInterface, ArrayAccess
         return $this->get($abstract);
     }
 
-
     /**
      * 解除类的绑定
      * @param string $id
@@ -146,11 +217,10 @@ class Container implements ContainerInterface, ArrayAccess
      */
     public function unbind(string $id): bool
     {
-        if (isset($this->bind[$id])) {
+        if ($this->bound($id)) {
             unset($this->bind[$id]);
-            return true;
         }
-        return false;
+        return $this;
     }
 
     /**
@@ -158,14 +228,13 @@ class Container implements ContainerInterface, ArrayAccess
      * @param string $abstract
      * @return bool
      */
-    public function remove(string $abstract): bool
+    public function remove(string $abstract)
     {
-        $abstract = $this->bound($abstract);
+        $abstract = $this->getAlias($abstract);
         if ($this->has($abstract)) {
             unset(static::$instances[$abstract]);
-            return true;
         }
-        return false;
+        return $this;
     }
 
     /**
@@ -215,7 +284,7 @@ class Container implements ContainerInterface, ArrayAccess
     {
         [$abstract, $method] = [$callable[0], $callable[1]];
         if (is_string($abstract)) {
-            $abstract = $this->bound($abstract);
+            $abstract = $this->getAlias($abstract);
         }
         $reflectionMethod = (new \ReflectionClass($abstract))->getMethod($method);
         if ($reflectionMethod->isPublic()) {
