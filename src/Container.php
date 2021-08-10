@@ -3,8 +3,8 @@ declare(strict_types=1);
 
 namespace Max;
 
+use Max\Exception\{ContainerException, NotFoundException};
 use Psr\Container\ContainerInterface;
-use Max\Exception\ContainerException;
 use ArrayAccess;
 
 /**
@@ -103,7 +103,7 @@ class Container implements ContainerInterface, ArrayAccess
         if ($this->has($abstract)) {
             return static::$instances[$abstract];
         }
-        throw new ContainerException('No instance found: ' . $abstract);
+        throw new NotFoundException('No instance found: ' . $abstract);
     }
 
     /**
@@ -121,7 +121,7 @@ class Container implements ContainerInterface, ArrayAccess
      * 绑定类到标识
      * @param string $id
      * 绑定的类标识
-     * @param string $className
+     * @param mixed $concrete
      * 绑定的类名
      */
     public function bind(string $id, $concrete)
@@ -136,7 +136,7 @@ class Container implements ContainerInterface, ArrayAccess
      */
     public function bound(string $id)
     {
-        return isset($this->bind[strtolower($id)]);
+        return isset($this->bind[$id]);
     }
 
     /**
