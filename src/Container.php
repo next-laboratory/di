@@ -213,9 +213,9 @@ class Container implements ContainerInterface, ArrayAccess
     /**
      * 解除类的绑定
      * @param string $id
-     * @return bool
+     * @return $this
      */
-    public function unbind(string $id): bool
+    public function unbind(string $id)
     {
         if ($this->bound($id)) {
             unset($this->bind[$id]);
