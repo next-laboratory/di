@@ -47,26 +47,25 @@ class Container implements ContainerInterface, ArrayAccess
     protected $refreshable = false;
 
     /**
-     * 单例模式获取类实例
-     * 从static::$instances中实例，和依赖注入获取相同实例
-     * @return static
-     * @deprecated
+     * 设置实例
+     * @param $abstract
+     * @param $concrete
      */
-    public static function instance()
+    public static function instance($abstract, $concrete)
     {
-        $class = static::class;
-        if (!isset(static::$instances[$class])) {
-            static::$instances[$class] = new static();
-        }
-        return static::$instances[$class];
+        static::$instances[$abstract] = $concrete;
     }
 
+    /**
+     * 容器实例
+     * @return mixed
+     */
     public static function getInstance()
     {
-        if (is_null(static::$instance)) {
-            static::$instance = new static;
+        if (is_null(self::$instance)) {
+            self::$instance = new static;
         }
-        return static::$instance;
+        return self::$instance;
     }
 
     /**
@@ -76,7 +75,7 @@ class Container implements ContainerInterface, ArrayAccess
      */
     public static function setInstance(ContainerInterface $container)
     {
-        static::$instance = $container;
+        self::$instance = $container;
     }
 
     /**
@@ -126,7 +125,7 @@ class Container implements ContainerInterface, ArrayAccess
      */
     public function bind(string $id, $concrete)
     {
-        $this->bind[$id] = $concrete;
+        $this->bind[$this->getAlias($id)] = $concrete;
     }
 
     /**
@@ -136,7 +135,7 @@ class Container implements ContainerInterface, ArrayAccess
      */
     public function bound(string $id)
     {
-        return isset($this->bind[$id]);
+        return isset($this->bind[$this->getAlias($id)]);
     }
 
     /**
