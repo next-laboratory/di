@@ -16,6 +16,25 @@ class Container implements ContainerInterface, ArrayAccess
 {
 
     /**
+     * 别名[开发]
+     * @var array
+     * @preview
+     */
+    protected $alias = [];
+
+    /**
+     * 绑定的类和参数
+     * @var array
+     */
+    protected $bind = [];
+
+    /**
+     * 实例标识
+     * @var bool
+     */
+//    protected $refreshable = false;
+
+    /**
      * 容器实例
      * @var
      */
@@ -26,25 +45,6 @@ class Container implements ContainerInterface, ArrayAccess
      * @var array
      */
     protected static $instances = [];
-
-    /**
-     * 绑定的类名
-     * @var array|string[]
-     */
-    protected $bind = [];
-
-    /**
-     * 别名[开发]
-     * @var array
-     * @preview
-     */
-    protected $alias = [];
-
-    /**
-     * 实例标识
-     * @var bool
-     */
-    protected $refreshable = false;
 
     /**
      * 设置实例
@@ -117,25 +117,40 @@ class Container implements ContainerInterface, ArrayAccess
     }
 
     /**
-     * 绑定类到标识
+     * 带参数的绑定
      * @param string $id
-     * 绑定的类标识
-     * @param mixed $concrete
-     * 绑定的类名
+     * 标识
+     * @param $bind
+     * 绑定的完整类名
+     * @param array $arguments
+     * 类构造函数的参数
+     * @return $this
      */
-    public function bind(string $id, $concrete)
+    public function bind(string $id, $bind, array $arguments = [], bool $renew = false)
     {
-        $this->bind[$this->getAlias($id)] = $concrete;
+        $this->alias($id, $bind);
+        $this->bind[$bind] = [$arguments, $renew];
+        return $this;
     }
 
     /**
-     * 判断标识是否被绑定
-     * @param $name
-     * @return string
+     * 判断是否绑定
+     * @param string $id
+     * @return bool
      */
     public function bound(string $id)
     {
         return isset($this->bind[$this->getAlias($id)]);
+    }
+
+    /**
+     * 根据标识获取绑定的参数
+     * @param string $id
+     * @return mixed
+     */
+    public function getBound(string $id)
+    {
+        return $this->bind[$this->getAlias($id)];
     }
 
     /**
@@ -163,6 +178,11 @@ class Container implements ContainerInterface, ArrayAccess
         return $this;
     }
 
+    /**
+     * 判断是否有别名
+     * @param string $id
+     * @return bool
+     */
     public function hasAlias(string $id)
     {
         return isset($this->alias[$id]);
@@ -191,8 +211,8 @@ class Container implements ContainerInterface, ArrayAccess
     public function make(string $abstract, array $arguments = [], bool $renew = false)
     {
         $abstract = $this->getAlias($abstract);
-        if ($abstract instanceof \Closure) {
-            return $abstract();
+        if ($this->bound($abstract)) {
+            [$arguments, $renew] = $this->getBound($abstract);
         }
         if ($renew) {
             $this->remove($abstract);
@@ -200,32 +220,19 @@ class Container implements ContainerInterface, ArrayAccess
         }
         if (!$this->has($abstract)) {
             $concrete = $this->resolve($abstract, $arguments);
-            if ($this->refreshable) {
-                $this->refreshable = false;
-                return $concrete;
-            }
+//            if ($this->refreshable) {
+//                $this->refreshable = false;
+//                return $concrete;
+//            }
             $this->set($abstract, $concrete);
         }
         return $this->get($abstract);
     }
 
     /**
-     * 解除类的绑定
-     * @param string $id
-     * @return $this
-     */
-    public function unbind(string $id)
-    {
-        if ($this->bound($id)) {
-            unset($this->bind[$id]);
-        }
-        return $this;
-    }
-
-    /**
      * 注销实例
      * @param string $abstract
-     * @return bool
+     * @return $this
      */
     public function remove(string $abstract)
     {
@@ -246,12 +253,12 @@ class Container implements ContainerInterface, ArrayAccess
     {
         $arguments       = array_values($arguments);
         $reflectionClass = new \ReflectionClass($abstract);
-        if ($reflectionClass->hasProperty('__refreshable')) {
-            $refreshable = $reflectionClass->getProperty('__refreshable');
-            if ($refreshable->isStatic() && $refreshable) {
-                $this->refreshable = true;
-            }
-        }
+//        if ($reflectionClass->hasProperty('__refreshable')) {
+//            $refreshable = $reflectionClass->getProperty('__refreshable');
+//            if ($refreshable->isStatic() && $refreshable) {
+//                $this->refreshable = true;
+//            }
+//        }
         if ($reflectionClass->hasMethod('__setter')) {
             $setter = $reflectionClass->getMethod('__setter');
             if ($setter->isPublic() && $setter->isStatic()) {
@@ -279,11 +286,12 @@ class Container implements ContainerInterface, ArrayAccess
      * 给构造方法传递的参数
      * @return mixed
      */
-    public function invokeMethod(array $callable, $arguments = [], bool $renew = true, array $constructorParameters = [])
+    public function invokeMethod(array $callable, $arguments = [], bool $renew = false, array $constructorParameters = [])
     {
-        [$abstract, $method] = [$callable[0], $callable[1]];
-        if (is_string($abstract)) {
-            $abstract = $this->getAlias($abstract);
+        [$abstract, $method] = $callable;
+        $abstract = $this->getAlias($abstract);
+        if ($this->bound($abstract)) {
+            [$constructorParameters, $renew] = $this->getBound($abstract);
         }
         $reflectionMethod = (new \ReflectionClass($abstract))->getMethod($method);
         if ($reflectionMethod->isPublic()) {
@@ -299,20 +307,20 @@ class Container implements ContainerInterface, ArrayAccess
         throw new ContainerException('Unable to call method: ' . $method);
     }
 
-    /**
-     * 直接向容器推送实例
-     * @param string $id
-     * @param $concrete
-     * @return bool
-     */
-    public function push(string $id, $concrete): bool
-    {
-        if ($this->has($id)) {
-            return false;
-        }
-        array_push(static::$instances, $concrete);
-        return true;
-    }
+//    /**
+//     * 直接向容器推送实例
+//     * @param string $id
+//     * @param $concrete
+//     * @return bool
+//     */
+//    public function push(string $id, $concrete): bool
+//    {
+//        if ($this->has($id)) {
+//            return false;
+//        }
+//        array_push(static::$instances, $concrete);
+//        return true;
+//    }
 
     /**
      * 依赖注入调用闭包
@@ -340,19 +348,32 @@ class Container implements ContainerInterface, ArrayAccess
     protected function bindParams(\ReflectionFunctionAbstract $reflectionMethod, array $arguments): array
     {
         $dependencies = $reflectionMethod->getParameters();
-        $injection    = [];
-        foreach ($dependencies as $dependence) {
+        return array_map(function ($dependence) use ($arguments) {
             $type = $dependence->getType();
             // TODO Closure的处理，之前做了，但是忘记在哪里会有问题
             if (is_null($type) || $type->isBuiltin()) {
                 if (!empty($arguments)) {
-                    $injection[] = array_shift($arguments);
+                    return array_shift($arguments);
                 }
             } else {
-                $injection[] = $this->make($type->getName());
+                return $this->make($type->getName());
             }
-        }
-        return $injection;
+        }, $dependencies);
+
+
+        /*        $injection = [];
+                foreach ($dependencies as $dependence) {
+                    $type = $dependence->getType();
+                    // TODO Closure的处理，之前做了，但是忘记在哪里会有问题
+                    if (is_null($type) || $type->isBuiltin()) {
+                        if (!empty($arguments)) {
+                            $injection[] = array_shift($arguments);
+                        }
+                    } else {
+                        $injection[] = $this->make($type->getName());
+                    }
+                }
+                return $injection;*/
     }
 
     public function offsetExists($offset)
