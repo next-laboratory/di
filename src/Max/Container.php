@@ -220,10 +220,6 @@ class Container implements ContainerInterface, ArrayAccess
         }
         if (!$this->has($abstract)) {
             $concrete = $this->resolve($abstract, $arguments);
-//            if ($this->refreshable) {
-//                $this->refreshable = false;
-//                return $concrete;
-//            }
             $this->set($abstract, $concrete);
         }
         return $this->get($abstract);
@@ -253,12 +249,6 @@ class Container implements ContainerInterface, ArrayAccess
     {
         $arguments       = array_values($arguments);
         $reflectionClass = new \ReflectionClass($abstract);
-//        if ($reflectionClass->hasProperty('__refreshable')) {
-//            $refreshable = $reflectionClass->getProperty('__refreshable');
-//            if ($refreshable->isStatic() && $refreshable) {
-//                $this->refreshable = true;
-//            }
-//        }
         if ($reflectionClass->hasMethod('__setter')) {
             $setter = $reflectionClass->getMethod('__setter');
             if ($setter->isPublic() && $setter->isStatic()) {
@@ -307,21 +297,6 @@ class Container implements ContainerInterface, ArrayAccess
         throw new ContainerException('Unable to call method: ' . $method);
     }
 
-//    /**
-//     * 直接向容器推送实例
-//     * @param string $id
-//     * @param $concrete
-//     * @return bool
-//     */
-//    public function push(string $id, $concrete): bool
-//    {
-//        if ($this->has($id)) {
-//            return false;
-//        }
-//        array_push(static::$instances, $concrete);
-//        return true;
-//    }
-
     /**
      * 依赖注入调用闭包
      * @param \Closure $function
@@ -359,21 +334,6 @@ class Container implements ContainerInterface, ArrayAccess
                 return $this->make($type->getName());
             }
         }, $dependencies);
-
-
-        /*        $injection = [];
-                foreach ($dependencies as $dependence) {
-                    $type = $dependence->getType();
-                    // TODO Closure的处理，之前做了，但是忘记在哪里会有问题
-                    if (is_null($type) || $type->isBuiltin()) {
-                        if (!empty($arguments)) {
-                            $injection[] = array_shift($arguments);
-                        }
-                    } else {
-                        $injection[] = $this->make($type->getName());
-                    }
-                }
-                return $injection;*/
     }
 
     public function offsetExists($offset)
