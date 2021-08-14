@@ -1,1 +1,1 @@
-一款基于psr-11规范的容器。
+A container based on the PSR-11 specification.

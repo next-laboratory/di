@@ -1,5 +1,6 @@
 {
   "name": "max/container",
+  "description": "A container based on the PSR-11 specification.",
   "authors": [
     {
       "name": "chengyao",
