@@ -366,17 +366,4 @@ class Container implements ContainerInterface, ArrayAccess
         return isset(static::$instances[$id]);
     }
 
-    private function __clone()
-    {
-    }
-
-    private function __construct()
-    {
-    }
-
-    public function __destruct()
-    {
-        static::$instances = null;
-    }
-
 }
