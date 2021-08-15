@@ -1,5 +1,6 @@
 {
   "name": "max/container",
+  "license": "Apache-2.0",
   "description": "A container based on the PSR-11 specification.",
   "authors": [
     {
@@ -7,10 +8,14 @@
       "email": "bigyao@139.com"
     }
   ],
-  "license": "Apache-2.0",
   "autoload": {
     "psr-4": {
       "Max\\": "src/Max/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Max\\Test\\": "tests/"
     }
   },
   "require": {
