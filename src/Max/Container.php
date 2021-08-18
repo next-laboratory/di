@@ -255,11 +255,23 @@ class Container implements ContainerInterface, ArrayAccess
                 return $setter->invokeArgs(null, $this->bindParams($setter, $arguments));
             }
         }
+        return new $abstract(...$this->getConstructorArgs($reflectionClass, $arguments));
+//        if (null === ($constructor = $reflectionClass->getConstructor())) {
+//            return new $abstract(...$arguments);
+//        }
+//        if ($constructor->isPublic()) {
+//            return new $abstract(...$this->bindParams($constructor, $arguments));
+//        }
+//        throw new ContainerException('Cannot initialize class: ' . $abstract);
+    }
+
+    public function getConstructorArgs(\ReflectionClass $reflectionClass, $arguments = []): array
+    {
         if (null === ($constructor = $reflectionClass->getConstructor())) {
-            return new $abstract(...$arguments);
+            return $arguments;
         }
         if ($constructor->isPublic()) {
-            return new $abstract(...$this->bindParams($constructor, $arguments));
+            return $this->bindParams($constructor, $arguments);
         }
         throw new ContainerException('Cannot initialize class: ' . $abstract);
     }
@@ -320,7 +332,7 @@ class Container implements ContainerInterface, ArrayAccess
      * 用户传入的参数
      * @return array
      */
-    protected function bindParams(\ReflectionFunctionAbstract $reflectionMethod, array $arguments): array
+    public function bindParams(\ReflectionFunctionAbstract $reflectionMethod, array $arguments): array
     {
         $dependencies = $reflectionMethod->getParameters();
         return array_map(function ($dependence) use ($arguments) {
