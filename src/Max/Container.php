@@ -273,7 +273,7 @@ class Container implements ContainerInterface, ArrayAccess
         if ($constructor->isPublic()) {
             return $this->bindParams($constructor, $arguments);
         }
-        throw new ContainerException('Cannot initialize class: ' . $abstract);
+        throw new ContainerException('Cannot initialize class: ' . $reflectionClass->getName());
     }
 
     /**
