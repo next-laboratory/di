@@ -334,18 +334,19 @@ class Container implements ContainerInterface, ArrayAccess
      */
     public function bindParams(\ReflectionFunctionAbstract $reflectionMethod, array $arguments): array
     {
-        $dependencies = $reflectionMethod->getParameters();
-        return array_map(function ($dependence) use ($arguments) {
+        $binds = [];
+        foreach($reflectionMethod->getParameters() as $dependence) {
             $type = $dependence->getType();
             // TODO Closure的处理，之前做了，但是忘记在哪里会有问题
             if (is_null($type) || $type->isBuiltin()) {
                 if (!empty($arguments)) {
-                    return array_shift($arguments);
+                    $binds[] = array_shift($arguments);
                 }
             } else {
-                return $this->make($type->getName());
+                $binds[] = $this->make($type->getName());
             }
-        }, $dependencies);
+        }
+        return $binds;
     }
 
     public function offsetExists($offset)
