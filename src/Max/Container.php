@@ -256,13 +256,6 @@ class Container implements ContainerInterface, ArrayAccess
             }
         }
         return new $abstract(...$this->getConstructorArgs($reflectionClass, $arguments));
-//        if (null === ($constructor = $reflectionClass->getConstructor())) {
-//            return new $abstract(...$arguments);
-//        }
-//        if ($constructor->isPublic()) {
-//            return new $abstract(...$this->bindParams($constructor, $arguments));
-//        }
-//        throw new ContainerException('Cannot initialize class: ' . $abstract);
     }
 
     public function getConstructorArgs(\ReflectionClass $reflectionClass, $arguments = []): array
