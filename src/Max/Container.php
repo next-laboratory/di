@@ -29,12 +29,6 @@ class Container implements ContainerInterface, ArrayAccess
     protected $bind = [];
 
     /**
-     * 实例标识
-     * @var bool
-     */
-//    protected $refreshable = false;
-
-    /**
      * 容器实例
      * @var
      */
@@ -218,7 +212,7 @@ class Container implements ContainerInterface, ArrayAccess
             $this->remove($abstract);
             return $this->resolve($abstract, $arguments);
         }
-        if (!$this->has($abstract)) {
+        if (false === $this->has($abstract)) {
             $concrete = $this->resolve($abstract, $arguments);
             $this->set($abstract, $concrete);
         }
@@ -247,23 +241,28 @@ class Container implements ContainerInterface, ArrayAccess
      */
     protected function resolve(string $abstract, array $arguments)
     {
-        $arguments       = array_values($arguments);
         $reflectionClass = new \ReflectionClass($abstract);
         if ($reflectionClass->hasMethod('__setter')) {
             $setter = $reflectionClass->getMethod('__setter');
             if ($setter->isPublic() && $setter->isStatic()) {
-                return $setter->invokeArgs(null, $this->bindParams($setter, $arguments));
+                return $setter->invokeArgs(null, $this->bindParams($setter, array_values($arguments)));
             }
         }
-        return new $abstract(...$this->getConstructorArgs($reflectionClass, $arguments));
+        return $reflectionClass->newInstanceArgs($this->getConstructorArgs($reflectionClass, $arguments));
     }
 
+    /**
+     * 获取构造函数参数
+     * @param \ReflectionClass $reflectionClass
+     * @param array $arguments
+     * @return array
+     */
     public function getConstructorArgs(\ReflectionClass $reflectionClass, $arguments = []): array
     {
         if (null === ($constructor = $reflectionClass->getConstructor())) {
             return $arguments;
         }
-        if ($constructor->isPublic()) {
+        if ($reflectionClass->isInstantiable()) {
             return $this->bindParams($constructor, $arguments);
         }
         throw new ContainerException('Cannot initialize class: ' . $reflectionClass->getName());
@@ -288,16 +287,18 @@ class Container implements ContainerInterface, ArrayAccess
         if ($this->bound($abstract)) {
             [$constructorParameters, $renew] = $this->getBound($abstract);
         }
-        $reflectionMethod = (new \ReflectionClass($abstract))->getMethod($method);
-        if ($reflectionMethod->isPublic()) {
-            $injectArguments = $this->bindParams($reflectionMethod, (array)$arguments);
-            if ($reflectionMethod->isStatic()) {
-                return $reflectionMethod->invokeArgs(null, $injectArguments);
+        $reflectionMethod = new \ReflectionMethod($abstract, $method);
+        if (false === $reflectionMethod->isAbstract()) {
+            $bindParams = $this->bindParams($reflectionMethod, (array)$arguments);
+            if ($reflectionMethod->isPublic()) {
+                if ($reflectionMethod->isStatic()) {
+                    return $reflectionMethod->invokeArgs(null, $bindParams);
+                }
+                return $reflectionMethod->invokeArgs(
+                    is_object($abstract) ? $abstract : $this->make($abstract, $constructorParameters, $renew),
+                    $bindParams
+                );
             }
-            if (!is_object($abstract)) {
-                $abstract = $this->make($abstract, $constructorParameters, $renew);
-            }
-            return $abstract->{$method}(...$injectArguments);
         }
         throw new ContainerException('Unable to call method: ' . $method);
     }
@@ -311,10 +312,8 @@ class Container implements ContainerInterface, ArrayAccess
      */
     public function invokeFunc(\Closure $function, array $arguments = [])
     {
-        return $function(...$this->bindParams(
-            (new \ReflectionFunction($function)),
-            $arguments
-        ));
+        $reflectFunction = new \ReflectionFunction($function);
+        return $reflectFunction->invokeArgs($this->bindParams($reflectFunction, $arguments));
     }
 
     /**
@@ -325,10 +324,10 @@ class Container implements ContainerInterface, ArrayAccess
      * 用户传入的参数
      * @return array
      */
-    public function bindParams(\ReflectionFunctionAbstract $reflectionMethod, array $arguments): array
+    public function bindParams(\ReflectionFunctionAbstract $reflectionMethod, array $arguments = []): array
     {
         $binds = [];
-        foreach($reflectionMethod->getParameters() as $dependence) {
+        foreach ($reflectionMethod->getParameters() as $dependence) {
             $type = $dependence->getType();
             // TODO Closure的处理，之前做了，但是忘记在哪里会有问题
             if (is_null($type) || $type->isBuiltin()) {
