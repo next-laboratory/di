@@ -245,7 +245,7 @@ class Container implements ContainerInterface, ArrayAccess
         if ($reflectionClass->hasMethod('__setter')) {
             $setter = $reflectionClass->getMethod('__setter');
             if ($setter->isPublic() && $setter->isStatic()) {
-                return $setter->invokeArgs(null, $this->bindParams($setter, array_values($arguments)));
+                return $setter->invokeArgs(null, $this->bindParams($setter, $arguments));
             }
         }
         return $reflectionClass->newInstanceArgs($this->getConstructorArgs($reflectionClass, $arguments));
@@ -257,7 +257,7 @@ class Container implements ContainerInterface, ArrayAccess
      * @param array $arguments
      * @return array
      */
-    public function getConstructorArgs(\ReflectionClass $reflectionClass, $arguments = []): array
+    public function getConstructorArgs(\ReflectionClass $reflectionClass, array $arguments = []): array
     {
         if (null === ($constructor = $reflectionClass->getConstructor())) {
             return $arguments;
@@ -326,7 +326,8 @@ class Container implements ContainerInterface, ArrayAccess
      */
     public function bindParams(\ReflectionFunctionAbstract $reflectionMethod, array $arguments = []): array
     {
-        $binds = [];
+        $binds     = [];
+        $arguments = array_values($arguments);
         foreach ($reflectionMethod->getParameters() as $dependence) {
             $type = $dependence->getType();
             // TODO Closure的处理，之前做了，但是忘记在哪里会有问题
