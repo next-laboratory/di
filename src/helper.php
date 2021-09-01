@@ -1,18 +1,15 @@
 <?php
 
-if (false === function_exists('app')) {
+use Max\Container;
 
+if (false === function_exists('container')) {
     /**
-     * 容器实例化和获取实例
-     * @param string|null $id
-     * @param array $arguments
-     * @param bool $renew
-     * @return mixed|object
+     * 返回容器实例
+     * @return Container
      */
-    function app(string $id = null, array $arguments = [], bool $renew = false)
+    function container()
     {
-        $app = App::getInstance();
-        return is_null($id) ? $app : $app->make($id, $arguments, $renew);
+        return Container::getInstance();
     }
 }
 
@@ -34,18 +31,25 @@ if (false === function_exists('invoke')) {
     function invoke($callable, array $arguments = [], bool $renew = false, array $constructorParameters = [])
     {
         if (is_array($callable)) {
-            return App::getInstance()->invokeMethod($callable, $arguments, $renew, $constructorParameters);
+            return container()->invokeMethod($callable, $arguments, $renew, $constructorParameters);
         }
         if ($callable instanceof Closure) {
-            return App::getInstance()->invokeFunc($callable, $arguments);
+            return container()->invokeFunc($callable, $arguments);
         }
         throw new ContainerException('Cannot invoke method.');
     }
 }
 
 if (false === function_exists('make')) {
+    /**
+     * 实例化类
+     * @param string $id
+     * @param array $arguments
+     * @param false $renew
+     * @return mixed|object
+     */
     function make(string $id, array $arguments = [], $renew = false)
     {
-        return \Max\App::getInstance()->make($id, $arguments, $renew);
+        return container()->make($id, $arguments, $renew);
     }
 }
