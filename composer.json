@@ -9,13 +9,16 @@
     }
   ],
   "autoload": {
+    "files": [
+      "src/helper.php"
+    ],
     "psr-4": {
       "Max\\": "src/Max/"
     }
   },
   "autoload-dev": {
     "psr-4": {
-      "Max\\Test\\": "tests/"
+      "Max\\Tests\\": "tests/"
     }
   },
   "require": {

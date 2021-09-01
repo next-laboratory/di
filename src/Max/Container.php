@@ -16,7 +16,7 @@ class Container implements ContainerInterface, ArrayAccess
 {
 
     /**
-     * 别名[开发]
+     * 别名
      * @var array
      * @preview
      */
@@ -28,31 +28,15 @@ class Container implements ContainerInterface, ArrayAccess
      */
     protected $bind = [];
 
-//    /**
-//     * 容器实例
-//     * @var
-//     */
-//    protected static $instance;
-
     /**
      * 容器
      * @var array
      */
     protected static $instances = [];
 
-//    /**
-//     * 设置实例
-//     * @param $abstract
-//     * @param $concrete
-//     */
-//    public static function instance($abstract, $concrete)
-//    {
-//        static::$instances[$abstract] = $concrete;
-//    }
-
     /**
      * 容器实例
-     * @return mixed
+     * @return static
      */
     public static function getInstance()
     {
@@ -62,16 +46,6 @@ class Container implements ContainerInterface, ArrayAccess
         }
         return static::$instances[$subClass];
     }
-
-//    /**
-//     * 使用静态方法设置
-//     * @param string $abstract
-//     * @param object $concrete
-//     */
-//    public static function setInstance(ContainerInterface $container)
-//    {
-//        self::$instance = $container;
-//    }
 
     /**
      * 将实例化的类存放到数组中
