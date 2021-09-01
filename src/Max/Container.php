@@ -28,11 +28,11 @@ class Container implements ContainerInterface, ArrayAccess
      */
     protected $bind = [];
 
-    /**
-     * 容器实例
-     * @var
-     */
-    protected static $instance;
+//    /**
+//     * 容器实例
+//     * @var
+//     */
+//    protected static $instance;
 
     /**
      * 容器
@@ -40,15 +40,15 @@ class Container implements ContainerInterface, ArrayAccess
      */
     protected static $instances = [];
 
-    /**
-     * 设置实例
-     * @param $abstract
-     * @param $concrete
-     */
-    public static function instance($abstract, $concrete)
-    {
-        static::$instances[$abstract] = $concrete;
-    }
+//    /**
+//     * 设置实例
+//     * @param $abstract
+//     * @param $concrete
+//     */
+//    public static function instance($abstract, $concrete)
+//    {
+//        static::$instances[$abstract] = $concrete;
+//    }
 
     /**
      * 容器实例
@@ -56,21 +56,22 @@ class Container implements ContainerInterface, ArrayAccess
      */
     public static function getInstance()
     {
-        if (is_null(self::$instance)) {
-            self::$instance = new static;
+        $subClass = static::class;
+        if (is_null(static::$instances[$subClass])) {
+            static::$instances[$subClass] = new static;
         }
-        return self::$instance;
+        return static::$instances[$subClass];
     }
 
-    /**
-     * 使用静态方法设置
-     * @param string $abstract
-     * @param object $concrete
-     */
-    public static function setInstance(ContainerInterface $container)
-    {
-        self::$instance = $container;
-    }
+//    /**
+//     * 使用静态方法设置
+//     * @param string $abstract
+//     * @param object $concrete
+//     */
+//    public static function setInstance(ContainerInterface $container)
+//    {
+//        self::$instance = $container;
+//    }
 
     /**
      * 将实例化的类存放到数组中
@@ -157,6 +158,11 @@ class Container implements ContainerInterface, ArrayAccess
     {
         $this->alias[$id] = $class;
         return $this;
+    }
+
+    public function singleton(string $id, $concrete)
+    {
+
     }
 
     /**
@@ -304,7 +310,7 @@ class Container implements ContainerInterface, ArrayAccess
     }
 
     /**
-     * 依赖注入调用闭包
+     * 依赖注入调用闭包, TODO 可以以调用已定义函数
      * @param \Closure $function
      * @param array $arguments
      * @return mixed
