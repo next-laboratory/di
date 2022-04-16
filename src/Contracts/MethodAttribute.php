@@ -13,9 +13,7 @@ declare(strict_types=1);
 
 namespace Max\Di\Contracts;
 
-interface AnnotationProcessorInterface
+interface MethodAttribute
 {
-    public function process();
-
-    public function isProcessable(): bool;
+    public function handle(\ReflectionClass $reflectionClass, \ReflectionMethod $reflectionMethod);
 }

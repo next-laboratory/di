@@ -11,11 +11,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace Max\Di\Exceptions;
+namespace Max\Di\Contracts;
 
-use Psr\Container\ContainerExceptionInterface;
-use RuntimeException;
-
-class ContainerException extends RuntimeException implements ContainerExceptionInterface
+interface ClassAttribute
 {
+    public function handle(\ReflectionClass $reflectionClass);
 }
