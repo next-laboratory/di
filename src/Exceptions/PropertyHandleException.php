@@ -11,9 +11,8 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace Max\Di\Contracts;
+namespace Max\Di\Exceptions;
 
-interface MethodAttribute
+class PropertyHandleException extends \RuntimeException
 {
-    public function handle(\ReflectionClass $reflectionClass, \ReflectionMethod $reflectionMethod);
 }
